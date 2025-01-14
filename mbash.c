@@ -39,9 +39,17 @@ void trim_and_normalize(char *str) {
     *dst = '\0'; // Terminer la chaîne
 }
 
+#define STATE_DEPART     0
+#define STATE_ESPACE     1
+#define STATE_ARG        2
+#define STATE_QUOTE      3
+
+#define STATE_FINI       4
+
 // Fonction pour séparer une commande en arguments en utilisant un automate
 int parse_command(char *command, char *argv[], int max_args) {
-    enum State { OUT, IN_WORD, IN_QUOTE } state = OUT;
+    
+    int state = STATE_ESPACE;
     char *start = NULL;
     int argc = 0;
 
@@ -50,10 +58,10 @@ int parse_command(char *command, char *argv[], int max_args) {
             case STATE_ESPACE:
                 if (!isspace((unsigned char)*p)) {
                     if (*p == '"') {
-                        state = IN_QUOTE;
+                        state = STATE_QUOTE;
                         start = p + 1; // Début après le guillemet
                     } else {
-                        state = IN_WORD;
+                        state = STATE_ARG;
                         start = p; // Début du mot
                     }
                 }
@@ -64,7 +72,7 @@ int parse_command(char *command, char *argv[], int max_args) {
                     *p = '\0'; // Fin du mot
                     argv[argc++] = start;
                     if (argc >= max_args - 1) return argc; // Limite atteinte
-                    state = OUT;
+                    state = STATE_FINI;
                 }
                 break;
 
@@ -73,14 +81,14 @@ int parse_command(char *command, char *argv[], int max_args) {
                     *p = '\0'; // Fin de la chaîne entre guillemets
                     argv[argc++] = start;
                     if (argc >= max_args - 1) return argc; // Limite atteinte
-                    state = OUT;
+                    state = STATE_FINI;
                 }
                 break;
         }
     }
 
     // Ajouter le dernier mot si nécessaire
-    if (state == IN_WORD || state == IN_QUOTE) {
+    if (state == STATE_ARG || state == STATE_QUOTE) {
         argv[argc++] = start;
     }
 
