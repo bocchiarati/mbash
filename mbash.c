@@ -143,6 +143,10 @@ void change_directory(char *path) {
 int main() {
     char command[1024];
 
+    if (getcwd(prompt, sizeof(prompt)) != NULL) {
+        strcat(prompt, "> "); // Met à jour le prompt
+    }
+
     while (1) {
         // Afficher le prompt
         printf("%s", prompt);
