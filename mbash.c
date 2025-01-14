@@ -121,8 +121,12 @@ void execute_command(char *command) {
         // Erreur lors de la création du processus
         perror("fork");
     } else {
-        // Processus parent, attendre la fin du processus enfant
+        // Processus parent
+      if(strcmp(argv[argc - 1], "&") != 0){ //si le dernier arg n'est pas &
         waitpid(pid, &status, 0);
+      }else{
+	printf("[%d]\n",pid);
+      }
     }
 }
 
