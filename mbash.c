@@ -14,6 +14,10 @@
 #define S_FINI	 		4
 #define S_ERREUR 	       	5
 
+/* Variables globales */
+
+char prompt[1024] = "mbash> ";
+
 // Fonction pour exécuter une commande (base avec system())
 void execute_command(char *command) {
     if (system(command) == -1) {
@@ -25,6 +29,9 @@ void execute_command(char *command) {
 void change_directory(char *path) {
     if (chdir(path) != 0) {
         perror("cd");
+    }else{
+        strcpy(prompt, path);  
+        strcat(prompt, "> "); //Met à jour le prompt
     }
 }
 
@@ -33,7 +40,7 @@ int main() {
 
     while (1) {
         // Afficher le prompt
-        printf("mbash> ");
+        printf("%s", prompt);
         fflush(stdout);
 
         // Lire la commande
