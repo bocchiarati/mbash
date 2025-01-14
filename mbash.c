@@ -46,9 +46,7 @@ void trim_and_normalize(char *str) {
 
 #define STATE_FINI       4
 
-// Fonction pour séparer une commande en arguments en utilisant un automate
 int parse_command(char *command, char *argv[], int max_args) {
-    
     int state = STATE_ESPACE;
     char *start = NULL;
     int argc = 0;
@@ -72,7 +70,7 @@ int parse_command(char *command, char *argv[], int max_args) {
                     *p = '\0'; // Fin du mot
                     argv[argc++] = start;
                     if (argc >= max_args - 1) return argc; // Limite atteinte
-                    state = STATE_FINI;
+                    state = STATE_ESPACE;
                 }
                 break;
 
@@ -81,7 +79,7 @@ int parse_command(char *command, char *argv[], int max_args) {
                     *p = '\0'; // Fin de la chaîne entre guillemets
                     argv[argc++] = start;
                     if (argc >= max_args - 1) return argc; // Limite atteinte
-                    state = STATE_FINI;
+                    state = STATE_ESPACE;
                 }
                 break;
         }
