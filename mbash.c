@@ -15,6 +15,10 @@ char prompt[1024] = "mbash> ";
 
 #define STATE_FINI       3
 
+int HISTORY_SIZE = 5;
+char history[5][1024];
+int next_insert = 0;
+
 //Automate
 int parse_command(char *command, char *argv[], int max_args) {
     int state = STATE_ESPACE;
@@ -108,6 +112,25 @@ void change_directory(char *path) {
     }
 }
 
+void update_history(char *command) {
+    if(next_insert == HISTORY_SIZE){
+        for (int i = 0; i < HISTORY_SIZE - 1; i++) {
+            strcpy(history[i], history[i+1]);
+        }
+        strcpy(history[HISTORY_SIZE - 1], command);
+    }
+    else {
+        strcpy(history[next_insert], command);
+        next_insert += 1;
+    }
+}
+
+void affiche_history(){
+    for (int i = 0; i < next_insert; i++) {
+            printf("%d %s\n", (i+1), history[i]);
+    }
+}
+
 int main() {
     char command[1024];
 
@@ -134,6 +157,8 @@ int main() {
             break;
         }
 
+	update_history(command);
+
 	char *argv[128];
 
         // Parse la commande avec l'automate
@@ -141,9 +166,13 @@ int main() {
 
         // Gérer la commande "cd"
         if (strcmp(argv[0], "cd") == 0) {
-	    change_directory(argv[1]);
-        } else {
-	  execute_command(argv,argc);
+            change_directory(argv[1]);
+        }
+        else if(strcmp(argv[0], "history") == 0){
+            affiche_history();
+        }
+        else {
+	    execute_command(argv,argc);
         }
     }
 
