@@ -9,43 +9,13 @@
 /* Variables globales */
 char prompt[1024] = "mbash> ";
 
-// Fonction pour nettoyer les espaces superflus
-void trim_and_normalize(char *str) {
-    char *src = str, *dst = str;
-    int in_space = 0;
+#define STATE_ESPACE     0
+#define STATE_ARG        1
+#define STATE_QUOTE      2
 
-    // Ignorer les espaces initiaux
-    while (isspace((unsigned char)*src)) src++;
+#define STATE_FINI       3
 
-    // Parcourir le reste de la chaîne
-    while (*src) {
-        if (isspace((unsigned char)*src)) {
-            if (!in_space) {
-                *dst++ = ' ';
-                in_space = 1;
-            }
-        } else {
-            *dst++ = *src;
-            in_space = 0;
-        }
-        src++;
-    }
-
-    // Supprimer les espaces en fin de chaîne
-    if (dst > str && isspace((unsigned char)*(dst - 1))) {
-        dst--;
-    }
-
-    *dst = '\0'; // Terminer la chaîne
-}
-
-#define STATE_DEPART     0
-#define STATE_ESPACE     1
-#define STATE_ARG        2
-#define STATE_QUOTE      3
-
-#define STATE_FINI       4
-
+//Automate
 int parse_command(char *command, char *argv[], int max_args) {
     int state = STATE_ESPACE;
     char *start = NULL;
@@ -94,16 +64,10 @@ int parse_command(char *command, char *argv[], int max_args) {
     return argc;
 }
 
-// Fonction pour exécuter une commande avec execve
-void execute_command(char *command) {
+// Fonction pour exécuter une commande avec execvp
+void execute_command(char *argv[], int argc) {
     pid_t pid;
     int status;
-
-    // Tableau d'arguments pour execve
-    char *argv[128];
-
-    // Parse la commande avec l'automate
-    int argc = parse_command(command, argv, 128);
 
     if (argc == 0) {
         return; // Si aucune commande n'est donnée, ne rien faire
@@ -165,19 +129,21 @@ int main() {
         // Supprimer le saut de ligne
         command[strcspn(command, "\n")] = '\0';
 
-        // Normaliser la commande
-        trim_and_normalize(command);
-
         // Quitter si la commande est "exit"
         if (strcmp(command, "exit") == 0) {
             break;
         }
 
+	char *argv[128];
+
+        // Parse la commande avec l'automate
+        int argc = parse_command(command, argv, 128);
+
         // Gérer la commande "cd"
-        if (strncmp(command, "cd ", 3) == 0) {
-            change_directory(command + 3);
+        if (strcmp(argv[0], "cd") == 0) {
+	    change_directory(argv[1]);
         } else {
-            execute_command(command);
+	  execute_command(argv,argc);
         }
     }
 
