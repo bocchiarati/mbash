@@ -8,7 +8,9 @@
 
 /* Variables globales */
 char prompt[1024] = "mbash> ";
-
+int HISTORY_SIZE = 5;
+char history[5][1024];
+int next_insert = 0;
 // Fonction pour nettoyer les espaces superflus
 void trim_and_normalize(char *str) {
     char *src = str, *dst = str;
@@ -103,7 +105,7 @@ void execute_command(char *command) {
 
     // Tableau d'arguments pour execve
     char *argv[128];
-
+    
     // Parse la commande avec l'automate
     int argc = parse_command(command, argv, 128);
 
@@ -142,9 +144,27 @@ void change_directory(char *path) {
     }
 }
 
+void update_history(char *command) {
+    if(next_insert == HISTORY_SIZE){
+        for (int i = 0; i < HISTORY_SIZE - 1; i++) {
+            strcpy(history[i], history[i+1]);
+        }
+        strcpy(history[HISTORY_SIZE - 1], command);
+    }
+    else {
+        strcpy(history[next_insert], command);
+        next_insert += 1;
+    }
+}
+
+void affiche_history(){
+    for (int i = 0; i < next_insert; i++) {
+            printf("%d %s\n", (i+1), history[i]);
+    }
+}
+
 int main() {
     char command[1024];
-
     while (1) {
         // Afficher le prompt
         printf("%s", prompt);
@@ -169,8 +189,15 @@ int main() {
 
         // Gérer la commande "cd"
         if (strncmp(command, "cd ", 3) == 0) {
+            update_history(command);
             change_directory(command + 3);
-        } else {
+        }
+        else if(strcmp(command, "history") == 0){
+            update_history(command);
+            affiche_history();
+        }
+        else {
+            update_history(command);
             execute_command(command);
         }
     }
