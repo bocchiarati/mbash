@@ -48,9 +48,7 @@ void trim_and_normalize(char *str) {
 
 #define STATE_FINI       4
 
-// Fonction pour séparer une commande en arguments en utilisant un automate
 int parse_command(char *command, char *argv[], int max_args) {
-    
     int state = STATE_ESPACE;
     char *start = NULL;
     int argc = 0;
@@ -74,7 +72,7 @@ int parse_command(char *command, char *argv[], int max_args) {
                     *p = '\0'; // Fin du mot
                     argv[argc++] = start;
                     if (argc >= max_args - 1) return argc; // Limite atteinte
-                    state = STATE_FINI;
+                    state = STATE_ESPACE;
                 }
                 break;
 
@@ -83,7 +81,7 @@ int parse_command(char *command, char *argv[], int max_args) {
                     *p = '\0'; // Fin de la chaîne entre guillemets
                     argv[argc++] = start;
                     if (argc >= max_args - 1) return argc; // Limite atteinte
-                    state = STATE_FINI;
+                    state = STATE_ESPACE;
                 }
                 break;
         }
@@ -125,8 +123,12 @@ void execute_command(char *command) {
         // Erreur lors de la création du processus
         perror("fork");
     } else {
-        // Processus parent, attendre la fin du processus enfant
+        // Processus parent
+      if(strcmp(argv[argc - 1], "&") != 0){ //si le dernier arg n'est pas &
         waitpid(pid, &status, 0);
+      }else{
+	printf("[%d]\n",pid);
+      }
     }
 }
 
@@ -165,6 +167,14 @@ void affiche_history(){
 
 int main() {
     char command[1024];
+<<<<<<< HEAD
+=======
+
+    if (getcwd(prompt, sizeof(prompt)) != NULL) {
+        strcat(prompt, "> "); // Met à jour le prompt
+    }
+
+>>>>>>> ec87a6f25b734d4345dec3077807f677eb7389ea
     while (1) {
         // Afficher le prompt
         printf("%s", prompt);
