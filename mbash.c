@@ -5,6 +5,8 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <ctype.h>
+#include <readline.h>
+#include <history.h>
 
 /* Variables globales */
 char prompt[1024] = "mbash> ";
@@ -12,14 +14,9 @@ char prompt[1024] = "mbash> ";
 #define STATE_ESPACE     0
 #define STATE_ARG        1
 #define STATE_QUOTE      2
-
 #define STATE_FINI       3
 
-int HISTORY_SIZE = 5;
-char history[5][1024];
-int next_insert = 0;
-
-//Automate
+// Automate
 int parse_command(char *command, char *argv[], int max_args) {
     int state = STATE_ESPACE;
     char *start = NULL;
@@ -67,10 +64,12 @@ int parse_command(char *command, char *argv[], int max_args) {
     argv[argc] = NULL; // Terminer la liste des arguments
     return argc;
 }
-void color(int color_index){
+
+void color(int color_index) {
     printf("\033[0;%dm", color_index);
 }
-void color_help(){
+
+void color_help() {
     printf("Pour changer la couleur du texte dans le terminal, vous pouvez utiliser les codes suivants :\n");
     printf(" - 1 : Rouge\n");
     printf(" - 2 : Vert\n");
@@ -91,24 +90,20 @@ void execute_command(char *argv[], int argc) {
         return; // Si aucune commande n'est donnée, ne rien faire
     }
 
-    // Créer un processus enfant
     pid = fork();
     if (pid == 0) {
-        // Processus enfant
         if (execvp(argv[0], argv) == -1) {
             perror("execvp");
         }
-        exit(EXIT_FAILURE); // Quitter si exec échoue
+        exit(EXIT_FAILURE);
     } else if (pid < 0) {
-        // Erreur lors de la création du processus
         perror("fork");
     } else {
-        // Processus parent
-      if(strcmp(argv[argc - 1], "&") != 0){ //si le dernier arg n'est pas &
-        waitpid(pid, &status, 0);
-      }else{
-	printf("[%d]\n",pid);
-      }
+        if (strcmp(argv[argc - 1], "&") != 0) {
+            waitpid(pid, &status, 0);
+        } else {
+            printf("[%d]\n", pid);
+        }
     }
 }
 
@@ -118,7 +113,7 @@ void change_directory(char *path) {
         perror("cd");
     } else {
         if (getcwd(prompt, sizeof(prompt)) != NULL) {
-            strcat(prompt, "> "); // Met à jour le prompt
+            strcat(prompt, "> ");
         } else {
             perror("getcwd");
             strcpy(prompt, "mbash> ");
@@ -126,66 +121,46 @@ void change_directory(char *path) {
     }
 }
 
-void update_history(char *command) {
-    if(next_insert == HISTORY_SIZE){
-        for (int i = 0; i < HISTORY_SIZE - 1; i++) {
-            strcpy(history[i], history[i+1]);
-        }
-        strcpy(history[HISTORY_SIZE - 1], command);
-    }
-    else {
-        strcpy(history[next_insert], command);
-        next_insert += 1;
-    }
-}
-
-void affiche_history(){
-    for (int i = 0; i < next_insert; i++) {
-            printf("%d %s\n", (i+1), history[i]);
-    }
-}
-
 int main() {
-    char command[1024];
+    char *command;
 
     if (getcwd(prompt, sizeof(prompt)) != NULL) {
-        strcat(prompt, "> "); // Met à jour le prompt
+        strcat(prompt, "> ");
     }
 
     while (1) {
-        // Afficher le prompt
-        printf("%s", prompt);
-        fflush(stdout);
+        command = readline(prompt);
 
-        // Lire la commande
-        if (fgets(command, sizeof(command), stdin) == NULL) {
+        if (command == NULL) {
             printf("\n");
-            break; // Quitter sur EOF (Ctrl+D)
-        }
-
-        // Supprimer le saut de ligne
-        command[strcspn(command, "\n")] = '\0';
-
-        // Quitter si la commande est "exit"
-        if (strcmp(command, "exit") == 0) {
             break;
         }
 
-	update_history(command);
+        // Ajouter à l'historique si non vide
+        if (*command) {
+            add_history(command);
+        }
 
-	char *argv[128];
+        // Quitter si la commande est "exit"
+        if (strcmp(command, "exit") == 0) {
+            free(command);
+            break;
+        }
 
-        // Parse la commande avec l'automate
+        char *argv[128];
         int argc = parse_command(command, argv, 128);
 
         // Gérer la commande "cd"
         if (strcmp(argv[0], "cd") == 0) {
             change_directory(argv[1]);
-        }
-        else if(strcmp(argv[0], "history") == 0){
-            affiche_history();
-        }
-        else if(strncmp(command, "color", 5) == 0){
+        } else if (strcmp(argv[0], "history") == 0) {
+            HIST_ENTRY **the_history_list = history_list();
+            if (the_history_list) {
+                for (int i = 0; the_history_list[i]; i++) {
+                    printf("%d %s\n", i + history_base, the_history_list[i]->line);
+                }
+            }
+        } else if (strncmp(command, "color", 5) == 0) {
             if (strcmp(command + 6, "1") == 0) {
                 color(31);
             } else if (strcmp(command + 6, "2") == 0) {
@@ -203,10 +178,12 @@ int main() {
             } else {
                 color_help();
             }
+        } else {
+            execute_command(argv, argc);
         }
-        else {
-	    execute_command(argv,argc);
-        }
+
+        free(command);
     }
+
     return 0;
 }
