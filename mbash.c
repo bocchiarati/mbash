@@ -67,6 +67,20 @@ int parse_command(char *command, char *argv[], int max_args) {
     argv[argc] = NULL; // Terminer la liste des arguments
     return argc;
 }
+void color(int color_index){
+    printf("\033[0;%dm", color_index);
+}
+void color_help(){
+    printf("Pour changer la couleur du texte dans le terminal, vous pouvez utiliser les codes suivants :\n");
+    printf(" - 1 : Rouge\n");
+    printf(" - 2 : Vert\n");
+    printf(" - 3 : Jaune\n");
+    printf(" - 4 : Bleu\n");
+    printf(" - 5 : Magenta\n");
+    printf(" - 6 : Cyan\n");
+    printf(" - 7 : Blanc\n");
+    printf(" - 0 : Normal\n");
+}
 
 // Fonction pour exécuter une commande avec execvp
 void execute_command(char *argv[], int argc) {
@@ -171,10 +185,28 @@ int main() {
         else if(strcmp(argv[0], "history") == 0){
             affiche_history();
         }
+        else if(strncmp(command, "color", 5) == 0){
+            if (strcmp(command + 6, "1") == 0) {
+                color(31);
+            } else if (strcmp(command + 6, "2") == 0) {
+                color(32);
+            } else if (strcmp(command + 6, "3") == 0) {
+                color(33);
+            } else if (strcmp(command + 6, "4") == 0) {
+                color(34);
+            } else if (strcmp(command + 6, "5") == 0) {
+                color(35);
+            } else if (strcmp(command + 6, "6") == 0) {
+                color(36);
+            } else if (strcmp(command + 6, "7") == 0) {
+                color(37);
+            } else {
+                color_help();
+            }
+        }
         else {
 	    execute_command(argv,argc);
         }
     }
-
     return 0;
 }
