@@ -101,11 +101,20 @@ void execute_command(char *argv[], int argc) {
     
     char *tokens[128];
     int token_count = 0;
+    int etCommercial = 1;
     
     for (int i = 0; i < argc; i++) {
         
         if (strcmp(argv[i], ";") == 0 || i == argc-1) {
 	  if(i==argc-1){tokens[token_count]=argv[i];token_count++;}
+
+	  if(strcmp(tokens[token_count-1], "&") == 0){
+	    etCommercial = 0;
+	    tokens[token_count-1] = NULL;
+	    token_count--;
+	  }
+
+	  tokens[token_count] = NULL;
 	  
           // Créer un processus enfant
 	  pid = fork();
@@ -120,10 +129,11 @@ void execute_command(char *argv[], int argc) {
 	    perror("fork");
 	  } else {
 	    // Processus parent
-	    if(strcmp(tokens[token_count-1], "&") != 0){ //si le dernier arg n'est pas &
-	      waitpid(pid, &status, 0);
-	    }else{
+	    if(etCommercial == 0){ //si le dernier arg est &
 	      printf("[%d]\n",pid);
+	      etCommercial=1;
+	    }else{
+	      waitpid(pid, &status, 0);
 	    }
 	  }
 	  memset(tokens, 0, sizeof(tokens));
@@ -201,7 +211,7 @@ int main() {
 	strcpy(hist, command);
 	char *argv[128];
         // Parse la commande avec l'automate
-        int argc = parse_command(command, argv, 128);
+        int argc = parse_command(command, argv, sizeof(hist));
 
         if(argc != 0){
             update_history(hist);
