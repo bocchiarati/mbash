@@ -15,8 +15,8 @@ char prompt[1024] = "mbash> ";
 
 #define STATE_FINI       3
 
-int HISTORY_SIZE = 5;
-char history[5][1024];
+int HISTORY_SIZE = 300;
+char history[300][1024];
 int next_insert = 0;
 
 //Automate
@@ -152,6 +152,8 @@ int main() {
         strcat(prompt, "> "); // Met à jour le prompt
     }
 
+    system("clear");
+
     while (1) {
         // Afficher le prompt
         printf("%s", prompt);
@@ -171,42 +173,47 @@ int main() {
             break;
         }
 
-	update_history(command);
-
 	char *argv[128];
-
         // Parse la commande avec l'automate
         int argc = parse_command(command, argv, 128);
 
-        // Gérer la commande "cd"
-        if (strcmp(argv[0], "cd") == 0) {
-            change_directory(argv[1]);
-        }
-        else if(strcmp(argv[0], "history") == 0){
-            affiche_history();
-        }
-        else if(strncmp(command, "color", 5) == 0){
-            if (strcmp(command + 6, "1") == 0) {
-                color(31);
-            } else if (strcmp(command + 6, "2") == 0) {
-                color(32);
-            } else if (strcmp(command + 6, "3") == 0) {
-                color(33);
-            } else if (strcmp(command + 6, "4") == 0) {
-                color(34);
-            } else if (strcmp(command + 6, "5") == 0) {
-                color(35);
-            } else if (strcmp(command + 6, "6") == 0) {
-                color(36);
-            } else if (strcmp(command + 6, "7") == 0) {
-                color(37);
-            } else {
-                color_help();
+        if(argc != 0){
+            update_history(command);
+            // Gérer la commande "cd"
+            if (strcmp(argv[0], "cd") == 0) {
+                change_directory(argv[1]);
             }
-        }
-        else {
-	    execute_command(argv,argc);
+            else if(strcmp(argv[0], "history") == 0){
+                affiche_history();
+            }
+            else if(strncmp(command, "color", 5) == 0){
+                if (strcmp(command + 6, "1") == 0) {
+                    color(31);
+                } else if (strcmp(command + 6, "2") == 0) {
+                    color(32);
+                } else if (strcmp(command + 6, "3") == 0) {
+                    color(33);
+                } else if (strcmp(command + 6, "4") == 0) {
+                    color(34);
+                } else if (strcmp(command + 6, "5") == 0) {
+                    color(35);
+                } else if (strcmp(command + 6, "6") == 0) {
+                    color(36);
+                } else if (strcmp(command + 6, "7") == 0) {
+                    color(37);
+                } else if (strcmp(command + 6, "8") == 0) {
+                    color(30);
+                } else if (strcmp(command + 6, "0") == 0) {
+                    color(0);
+                } else {
+                    color_help();
+                }
+            }
+             else {
+	         execute_command(argv,argc);
+            }
         }
     }
     return 0;
 }
+
