@@ -86,6 +86,7 @@ void color_help(){
     printf(" - 5 : Magenta\n");
     printf(" - 6 : Cyan\n");
     printf(" - 7 : Blanc\n");
+    printf(" - 8 : Noir\n");
     printf(" - 0 : Normal\n");
 }
 
@@ -97,25 +98,41 @@ void execute_command(char *argv[], int argc) {
     if (argc == 0) {
         return; // Si aucune commande n'est donnée, ne rien faire
     }
-
-    // Créer un processus enfant
-    pid = fork();
-    if (pid == 0) {
-        // Processus enfant
-        if (execvp(argv[0], argv) == -1) {
-            perror("execvp");
+    
+    char *tokens[128];
+    int token_count = 0;
+    
+    for (int i = 0; i < argc; i++) {
+        
+        if (strcmp(argv[i], ";") == 0 || i == argc-1) {
+	  if(i==argc-1){tokens[token_count]=argv[i];token_count++;}
+	  
+          // Créer un processus enfant
+	  pid = fork();
+	  if (pid == 0) {
+	    // Processus enfant
+	    if (execvp(tokens[0], tokens) == -1) {
+	      perror("execvp");
+	    }
+	    exit(0); 
+	  } else if (pid < 0) {
+	    // Erreur lors de la création du processus
+	    perror("fork");
+	  } else {
+	    // Processus parent
+	    if(strcmp(tokens[token_count-1], "&") != 0){ //si le dernier arg n'est pas &
+	      waitpid(pid, &status, 0);
+	    }else{
+	      printf("[%d]\n",pid);
+	    }
+	  }
+	  memset(tokens, 0, sizeof(tokens));
+          token_count = 0;
+        } else {
+            // Ajouter l'élément au token actuel
+	    tokens[token_count]=argv[i];
+	    token_count++;
         }
-        exit(EXIT_FAILURE); // Quitter si exec échoue
-    } else if (pid < 0) {
-        // Erreur lors de la création du processus
-        perror("fork");
-    } else {
-        // Processus parent
-      if(strcmp(argv[argc - 1], "&") != 0){ //si le dernier arg n'est pas &
-        waitpid(pid, &status, 0);
-      }else{
-	printf("[%d]\n",pid);
-      }
     }
 }
 
@@ -172,7 +189,7 @@ int main() {
             break; // Quitter sur EOF (Ctrl+D)
         }
 
-        // Supprimer le saut de ligne
+        // Supprimer les saut de ligne
         command[strcspn(command, "\n")] = '\0';
 
         // Quitter si la commande est "exit"
@@ -180,12 +197,15 @@ int main() {
             break;
         }
 
+	char hist[1024];
+	strcpy(hist, command);
+
 	char *argv[128];
         // Parse la commande avec l'automate
         int argc = parse_command(command, argv, 128);
 
         if(argc != 0){
-            update_history(command);
+            update_history(hist);
             // Gérer la commande "cd"
             if (strcmp(argv[0], "cd") == 0) {
                 change_directory(argv[1]);
@@ -193,24 +213,26 @@ int main() {
             else if(strcmp(argv[0], "history") == 0){
                 affiche_history();
             }
-            else if(strncmp(command, "color", 5) == 0){
-                if (strcmp(command + 6, "1") == 0) {
+            else if(strcmp(argv[0], "color") == 0){
+	        if(argv[1] == NULL) {
+		    color_help();
+		} else if (strcmp(argv[1], "1") == 0) {
                     color(31);
-                } else if (strcmp(command + 6, "2") == 0) {
+                } else if (strcmp(argv[1], "2") == 0) {
                     color(32);
-                } else if (strcmp(command + 6, "3") == 0) {
+                } else if (strcmp(argv[1], "3") == 0) {
                     color(33);
-                } else if (strcmp(command + 6, "4") == 0) {
+                } else if (strcmp(argv[1], "4") == 0) {
                     color(34);
-                } else if (strcmp(command + 6, "5") == 0) {
+                } else if (strcmp(argv[1], "5") == 0) {
                     color(35);
-                } else if (strcmp(command + 6, "6") == 0) {
+                } else if (strcmp(argv[1], "6") == 0) {
                     color(36);
-                } else if (strcmp(command + 6, "7") == 0) {
+                } else if (strcmp(argv[1], "7") == 0) {
                     color(37);
-                } else if (strcmp(command + 6, "8") == 0) {
+                } else if (strcmp(argv[1], "8") == 0) {
                     color(30);
-                } else if (strcmp(command + 6, "0") == 0) {
+                } else if (strcmp(argv[1], "0") == 0) {
                     color(0);
                 } else {
                     color_help();
