@@ -2,6 +2,7 @@
 -éxécution des commandes avec execvp en prenant en compte le &
 -pouvoir changer la couleur du mbash
 -pouvoir voir l'historique des commandes avec la commande history
+-éxécuter plusieurs commandes en même temps avec le ;
 */
 
 #include <stdio.h>
