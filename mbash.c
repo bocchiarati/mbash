@@ -172,13 +172,14 @@ int main() {
         if (strcmp(command, "exit") == 0) {
             break;
         }
-
+        if(command[0] != NULL) {
+            update_history(command);
+        }
 	char *argv[128];
         // Parse la commande avec l'automate
         int argc = parse_command(command, argv, 128);
 
         if(argc != 0){
-            update_history(command);
             // Gérer la commande "cd"
             if (strcmp(argv[0], "cd") == 0) {
                 change_directory(argv[1]);
